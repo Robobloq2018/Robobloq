@@ -4,7 +4,7 @@
 #include <WProgram.h>
 #endif
 
-#include "RB_SOfTI2CMASTER.h"
+#include "RB_SOFTI2CMASTER.h"
 
 #include <util/delay.h>
 #include <string.h>
