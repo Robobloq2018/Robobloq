@@ -23,7 +23,7 @@
 #include "RB_SERVO.h"
 #include "RB_SOFTI2CMASTER.h"
 #include "RB_SOUNDSENSOR.h"
-#include "RB_TEMPANDHUIM.h"
+#include "RB_TEMPANDHUMI.h"
 #include "RB_ULTRASONIC.h"
 #include "avr/wdt.h"
 
