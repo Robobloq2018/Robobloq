@@ -26,6 +26,9 @@
 #include "RB_TEMPANDHUMI.h"
 #include "RB_ULTRASONIC.h"
 #include "avr/wdt.h"
+#include "RB_MP3.h"
+#include "RB_RGBLEDMATRIX.h"
+#include "RB_COLORSENSOR.h"
 
 
 
@@ -49,6 +52,9 @@
 #define   Mode_Change                         0x18          //模式切换
 #define   Servo_Set                           0x19          //舵机控制
 #define   ExDCMotor_Set                       0x1A          //外置电机控制
+#define   RGBLEDMatrix_Set                    0x1B          //外置电机控制
+#define   MP3_Set                             0x1C
+
 #define   UlSensorDistance_Read               0xA1          //超声波距离读取
 #define   Button_Read                         0xA2          //按键读取
 #define   Power_Read                          0xA3          //读取电压
@@ -57,6 +63,8 @@
 #define   Light_Read                          0xA6          //光线传感器数据读取
 #define   Sound_Read                          0xA7          //声音传感器数据读取
 #define   PIRSensor_Read                      0xA8          //人体红外传感器读取
+#define   GyroSensor_Read                     0xA9          //陀螺仪传感器数据读取
+#define   ColorSensor_Read                    0XAA          //颜色传感器读取
 
 
 
@@ -66,7 +74,7 @@
 
 #define DeviceType                            1          //主控类型          
 #define HardwareVersion                       2          //硬件版本
-#define SoftwareVersion                       4          //软件版本     
+#define SoftwareVersion                       7          //软件版本     
 
 
 /*
