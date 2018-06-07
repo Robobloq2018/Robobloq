@@ -1321,3 +1321,16 @@ void TurnRight1(void)
      RB_EncoderMotor_M1.SetMotorPwm(0); 
      RB_EncoderMotor_M2.SetMotorPwm(0); 
   } 
+
+
+ void Power_Check(void)
+  {    
+         float  V1 = analogRead(LowPowr_Pin);
+         float power = V1*(15.0/1024.0);
+         if((power>10.2)) {
+           digitalWrite(MOTOR_Charge_Pin,LOW);  
+         }
+         else {
+           digitalWrite(MOTOR_Charge_Pin,HIGH); 
+         }
+  }
