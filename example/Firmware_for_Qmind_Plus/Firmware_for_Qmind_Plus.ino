@@ -19,6 +19,10 @@
  *             1.2.4           2018/01/23     Allen.Feng                 修复电机驱动代码
  *             1.2.4           2018/03/12     Allen.Feng                 新增加人体红外传感器
  *             1.2.4           2018/03/14     Allen.Feng                 修复双路电机驱动代码
+  *            1.2.5           2018/03/14     Allen.Feng                 修复双路电机驱动代码
+ *             1.2.6           2018/04/11     Allen.Feng                 新增加MP3
+ *             1.2.7           2018/05/07     Allen.Feng                 新增加颜色传感器
+ *             1.2.7           2018/05/07     Allen.Feng                 新增加陀螺仪传感器
   ********************************************************/
 
 
@@ -48,9 +52,14 @@ RB_LightSensor   *LightSensor  = NULL ;
 RB_SoundSensor   *SoundSensor  = NULL ;
 RB_DCMotor       *DCmotor      = NULL ;  
 RB_PirSensor     *PirSensor    = NULL ;
+RB_MP3           *MP3          = NULL;
+RB_RGBLEDMATRIX  *RGBLEDMatrix = NULL;
+RB_COLORSENSOR   *COLORSENSOR  = NULL;
 
 
 uint8_t  LineFollowFlag   = 0;
+ unsigned short RGB_LED_test[72];
+ unsigned short RGB_LED_test2[72];
 
 /*
  * 
@@ -103,7 +112,16 @@ void _setup(void)
             Buzzer.setPin(44);
             pinMode(MOTOR_Sleep_Pin,OUTPUT);
             digitalWrite(MOTOR_Sleep_Pin,HIGH); 
-         }
+         } 
+      RGBled.setColor(0,200,0,0);
+      RGBled.show();
+      delay(500);
+      RGBled.setColor(0,0,200,0);
+      RGBled.show();
+      delay(500);
+      RGBled.setColor(0,0,0,200);
+      RGBled.show(); 
+      delay(500);  
 }
 
 void setup() {
@@ -126,6 +144,7 @@ void setup() {
 void loop() {
 
        wdt_reset();
+       Power_Check();
        SerialCheak_Process();
        RB_EncoderMotor_M1.Loop();
        RB_EncoderMotor_M2.Loop();
@@ -556,6 +575,48 @@ void SerialDataAnalysis(bool ack)
                       }
                       Set_Mode_Flag = 1;
                       break;
+          case RGBLEDMatrix_Set:
+                       if(RGBLEDMatrix== NULL)
+                        {
+                          RGBLEDMatrix = new RB_RGBLEDMATRIX(RX_BUF[ack][5]);
+                          RGBLEDMatrix->RB_RGBLEDMATRIX_Init(0X77);
+                          RGBLEDMatrix->RB_RGBLEDMATRIX_Init(0X74);
+                         }
+                     else if(RGBLEDMatrix->GetPort() != RX_BUF[ack][5]){
+                          delete RGBLEDMatrix;
+                          RGBLEDMatrix = new RB_RGBLEDMATRIX(RX_BUF[ack][5]);
+                          RGBLEDMatrix->RB_RGBLEDMATRIX_Init(0X77);
+                          RGBLEDMatrix->RB_RGBLEDMATRIX_Init(0X74);
+                      }
+                       memset(RGB_LED_test,0,72);
+                       for(int i=0;i<72;i++)
+                       {
+                          RGB_LED_test[i] = RX_BUF[ack][78+i];
+                       }
+                       memset(RGB_LED_test2,0,72);
+                        for(int i=0;i<72;i++)
+                       {
+                          RGB_LED_test2[i] = RX_BUF[ack][6+i];
+                  
+                        }
+                       RGBLEDMatrix->RGBLEDMATRIX_DISPALY(0X74,RGB_LED_test);
+                       RGBLEDMatrix->RGBLEDMATRIX_DISPALY(0X77,RGB_LED_test2);
+                       Set_Mode_Flag =1;
+                       break;
+        case MP3_Set:
+                     if(MP3== NULL)
+                        {
+                          MP3 = new RB_MP3(RX_BUF[ack][5]);
+                         }
+                      else if(MP3->GetPort() != RX_BUF[ack][5]){
+                          delete MP3;
+                          MP3 = new RB_MP3(RX_BUF[ack][5]);
+                      }
+                       if(MP3->RB_MP3_Mode()!=RX_BUF[ack][6])
+                        {MP3->RB_MP3_Set(RX_BUF[ack][6]);}
+                       MP3->RB_MP3_Star(RX_BUF[ack][7],RX_BUF[ack][8]);
+                       Set_Mode_Flag =1;
+                       break;
         
         case UlSensorDistance_Read:
                     if(Ultrasonic == NULL){
@@ -733,7 +794,38 @@ void SerialDataAnalysis(bool ack)
                          {TX_CheckSum += TX_BUF[i];}
                       TX_BUF[TX_Count++] = TX_CheckSum;
                       RB_Serial.Serial_SendString(TX_BUF,TX_Count);    
-                      break;                        
+                      break;  
+        case ColorSensor_Read:
+                     unsigned short c,r,g,b;
+                     if(COLORSENSOR == NULL){
+                           COLORSENSOR = new RB_COLORSENSOR(RX_BUF[ack][5],TCS34725_INTEGRATIONTIME_50MS,TCS34725_GAIN_1X);
+                           COLORSENSOR->begin();
+                     }
+                     else if(COLORSENSOR->GetPort() != RX_BUF[ack][5]){
+                          delete COLORSENSOR;
+                          COLORSENSOR = new RB_COLORSENSOR(RX_BUF[ack][5],TCS34725_INTEGRATIONTIME_50MS,TCS34725_GAIN_1X);
+                          COLORSENSOR->begin();
+                     }
+                      COLORSENSOR->getRawData(&r,&g,&b,&c);
+                      TX_BUF[TX_Count++] = 0x52;
+                      TX_BUF[TX_Count++] = 0X42;
+                      TX_BUF[TX_Count++] = 0X00;
+                      TX_BUF[TX_Count++] = RX_BUF[ack][3];
+                      TX_BUF[TX_Count++] = 0x01;
+                      TX_BUF[TX_Count++] = (unsigned char)(r/256);
+                      TX_BUF[TX_Count++] = (unsigned char)(r%256);
+                      TX_BUF[TX_Count++] = (unsigned char)(g/256);
+                      TX_BUF[TX_Count++] = (unsigned char)(g%256);
+                      TX_BUF[TX_Count++] = (unsigned char)(b/256);
+                      TX_BUF[TX_Count++] = (unsigned char)(b%256);
+                      TX_BUF[TX_Count++] = (unsigned char)(c/256);
+                      TX_BUF[TX_Count++] = (unsigned char)(c%256);  
+                      TX_BUF[2] = TX_Count+1;
+                      for(i=0;i<TX_Count;i++)
+                         {TX_CheckSum += TX_BUF[i];}
+                      TX_BUF[TX_Count++] = TX_CheckSum;
+                      RB_Serial.Serial_SendString(TX_BUF,TX_Count);    
+                      break;  
         default : 
                      break;
         
