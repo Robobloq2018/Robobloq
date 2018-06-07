@@ -20,6 +20,9 @@ public:
     void beginTransmission(uint8_t slaveaddress);
     void endTransmission(void);
     uint8_t send(uint8_t data);
+    uint8_t Read_OneByte(uint8_t slaveaddress,uint8_t regaddress);
+    uint16_t RB_SoftI2CMaster::Read_TwoByte(uint8_t slaveaddress,uint8_t regaddress);
+    uint8_t RB_SoftI2CMaster::Write_OneByte(uint8_t slaveaddress,uint8_t regaddress,uint8_t data);
  private:
     uint8_t _SDA;
     uint8_t _SCL;   
