@@ -1,4 +1,4 @@
-#include "RB_DCMotor.h"
+#include "RB_DCMOTOR.h"
 
 RB_DCMotor  RB_DCMotor(1);
 
