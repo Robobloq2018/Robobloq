@@ -13,7 +13,8 @@ Servo RB_Servo2;
 
 RB_SERVO::RB_SERVO(uint8_t Servo1_pin,uint8_t Servo2_pin)
 {
-	
+	 pinMode(20,OUTPUT);
+   digitalWrite(MOTOR_Charge_Pin,HIGH);  
 	_Servo1_pin  = Servo1_pin;
 	_Servo2_pin  = Servo2_pin;
 	pinMode(_Servo1_pin,OUTPUT);
@@ -24,7 +25,9 @@ RB_SERVO::RB_SERVO(uint8_t Servo1_pin,uint8_t Servo2_pin)
 }
 
 RB_SERVO::RB_SERVO(uint8_t port): RB_Port(port)
-{
+{       
+	 pinMode(20,OUTPUT);
+   digitalWrite(MOTOR_Charge_Pin,HIGH);  
 	_Servo1_pin = RBPort[port].clk;
 	_Servo2_pin = RBPort[port].dat;
 	pinMode(_Servo1_pin,OUTPUT);
