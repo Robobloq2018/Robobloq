@@ -19,8 +19,7 @@ RB_SERVO::RB_SERVO(uint8_t Servo1_pin,uint8_t Servo2_pin)
 	_Servo2_pin  = Servo2_pin;
 	pinMode(_Servo1_pin,OUTPUT);
   pinMode(_Servo2_pin,OUTPUT);
-  RB_Servo1.attach(_Servo1_pin);
-	RB_Servo2.attach(_Servo2_pin); 
+
 	
 }
 
@@ -32,8 +31,7 @@ RB_SERVO::RB_SERVO(uint8_t port): RB_Port(port)
 	_Servo2_pin = RBPort[port].dat;
 	pinMode(_Servo1_pin,OUTPUT);
   pinMode(_Servo2_pin,OUTPUT);
-	RB_Servo1.attach(_Servo1_pin);
-	RB_Servo2.attach(_Servo2_pin);
+	
 }
 
 void RB_SERVO::RB_SERVO_INIT(void)
