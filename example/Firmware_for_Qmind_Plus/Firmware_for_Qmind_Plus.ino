@@ -518,10 +518,12 @@ void SerialDataAnalysis(bool ack)
         case Servo_Set:
                      if(RX_BUF[ack][5]==1||RX_BUF[ack][5]==8)
                         {
-                              if(Servo1 == NULL){Servo1 = new RB_SERVO(RX_BUF[ack][5]);}
+                              if(Servo1 == NULL){Servo1 = new RB_SERVO(RX_BUF[ack][5]);
+                                                Servo1->RB_SERVO_INIT();}
                               else if(Servo1->GetPort() != RX_BUF[ack][5]) {
                                         delete Servo1;
                                         Servo1 = new RB_SERVO(RX_BUF[ack][5]);
+                               Servo1->RB_SERVO_INIT();
                               }
                               switch(RX_BUF[ack][6]){
                                         case 0: Servo1->RB_SERVO_Write((uint8_t)RX_BUF[ack][7],(uint8_t)RX_BUF[ack][8]);
