@@ -35,6 +35,17 @@ RB_SERVO::RB_SERVO(uint8_t port): RB_Port(port)
 	RB_Servo1.attach(_Servo1_pin);
 	RB_Servo2.attach(_Servo2_pin);
 }
+
+void RB_SERVO::RB_SERVO_INIT(void)
+{   
+	 RB_Servo1.attach(_Servo1_pin);
+	RB_Servo2.attach(_Servo2_pin);
+	RB_Servo1.write(90);
+	RB_Servo1.write(90);
+	
+	
+}
+
 uint8_t  RB_SERVO::RB_SERVO_Attach1(int pin, int min, int max)
 {
 	RB_Servo1.attach(_Servo1_pin,min,max);
