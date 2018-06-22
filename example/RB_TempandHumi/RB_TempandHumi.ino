@@ -12,13 +12,14 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-    TempAndHumi.Update() ;
-    temp = TempAndHumi.GetTemperature();
-    humi = TempAndHumi.GetHumidity();
-     Serial.print("temp:");
-     Serial.println(temp);
+     humi = GetHumidity_2();
+   
     Serial.print("humi:");
      Serial.println(humi);
+     delay(1500);
+      temp = GetTemperature_2();
+        Serial.print("temp:");
+     Serial.println(temp);
      delay(1500);
     
 }
