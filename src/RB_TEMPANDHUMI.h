@@ -18,6 +18,8 @@ class RB_TempAndHumi:public RB_Port
 	         void Update(void);
 	         uint8_t GetHumidity(void);
 	         uint8_t GetTemperature(void);
+		 uint8_t GetHumidity_2(void);
+	         uint8_t GetTemperature_2(void);
 			     uint8_t GetValue(uint8_t index);
 			     double  GetFahrenheit(void);
 			     double  GetKelvin(void);
