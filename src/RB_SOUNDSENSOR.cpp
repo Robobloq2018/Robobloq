@@ -28,7 +28,7 @@ uint16_t RB_SoundSensor::GetSound(void)
 	 return value;
 }
 
-uint16_t  RB_LightSensor::  GetLightValue(void)
+uint16_t  RB_SoundSensor::  GetSoundValue(void)
 {
     int i = 0;
     uint16_t Value[10];
@@ -37,7 +37,7 @@ uint16_t  RB_LightSensor::  GetLightValue(void)
     uint16_t return_value = 0;
     for(i=0;i<10;i++) 
        {
-          Value[i] = GetLight();
+          Value[i] = GetSound();
           if(Value[i]>max)
              max = Value[i];
           if(Value[i]<min)
