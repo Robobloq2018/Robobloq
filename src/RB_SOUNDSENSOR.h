@@ -16,6 +16,7 @@ class RB_SoundSensor:public RB_Port
 		    RB_SoundSensor(uint8_t port);
 		    void SetPin(uint8_t sigpin);
 	      uint16_t GetSound(void); 
+	      uint16_t GetSoundValue(void); 
   private:
        uint8_t  _SigPin;
 };
