@@ -748,8 +748,8 @@ void SerialDataAnalysis(bool ack)
                       TX_BUF[TX_Count++] = 0X00;
                       TX_BUF[TX_Count++] = RX_BUF[ack][3];
                       TX_BUF[TX_Count++] = 0x01;
-                      TX_BUF[TX_Count++] = (uint8_t)(LightSensor->GetLight()/256);
-                      TX_BUF[TX_Count++] = (uint8_t)(LightSensor->GetLight()%256);
+                      TX_BUF[TX_Count++] = (uint8_t)(LightSensor->GetLightValue()/256);
+                      TX_BUF[TX_Count++] = (uint8_t)(LightSensor->GetLightValue()%256);
                       TX_BUF[2] = TX_Count+1;
                       for(i=0;i<TX_Count;i++)
                          {TX_CheckSum += TX_BUF[i];}
@@ -769,8 +769,8 @@ void SerialDataAnalysis(bool ack)
                       TX_BUF[TX_Count++] = 0X00;
                       TX_BUF[TX_Count++] = RX_BUF[ack][3];
                       TX_BUF[TX_Count++] = 0x01;
-                      TX_BUF[TX_Count++] = (uint8_t)(SoundSensor->GetSound()/256);
-                      TX_BUF[TX_Count++] = (uint8_t)(SoundSensor->GetSound()%256);
+                      TX_BUF[TX_Count++] = (uint8_t)(SoundSensor->GetSoundValue()/256);
+                      TX_BUF[TX_Count++] = (uint8_t)(SoundSensor->GetSoundValue()%256);
                       TX_BUF[2] = TX_Count+1;
                       for(i=0;i<TX_Count;i++)
                          {TX_CheckSum += TX_BUF[i];}
