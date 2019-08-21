@@ -41,6 +41,7 @@ void    RB_MP3::RB_MP3_Set(uint8_t mode)
    SoftwareSerial::write(Senddata[i]);
     }
   _mode = mode;
+  delay(50);
   
 }
 void RB_MP3::RB_MP3_Star(uint8_t mode ,uint8_t data)
@@ -60,4 +61,12 @@ void RB_MP3::RB_MP3_Star(uint8_t mode ,uint8_t data)
 	{
 	 SoftwareSerial::write(Senddata[i]);
     }
+	delay(50);
+}
+
+void RB_MP3::RB_MP3_END(void)
+{
+	
+	SoftwareSerial::end();
+	
 }

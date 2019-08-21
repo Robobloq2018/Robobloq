@@ -8,10 +8,10 @@
 /*
  *  Rx_buf
  */
- extern         char    RX_BUF[2][50] ;
- extern         char    TX_BUF[50];
+ extern         char    RX_BUF[2][200] ;
+ extern         char    TX_BUF[200];
  extern         char    RX_OK  ;
- extern         char    RX_COUNT ;
+ extern      unsigned   char    RX_COUNT ;
  extern         bool    RX_ACT ; 
 
 

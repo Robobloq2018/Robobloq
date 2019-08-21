@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 #include <Arduino.h>
-#include "RB_Port.h" 
+#include "RB_PORT.h" 
 #include "RB_SOFTI2CMASTER.h"
 
 #define   Slave_ADDRESSADGND    0X74
@@ -418,9 +418,11 @@ class  RB_RGBLEDMATRIX:public RB_SoftI2CMaster
 		void RB_RGBLEDMATRIX::LED_Type3ClearFrame2Page(unsigned char address);
 		void RB_RGBLEDMATRIX::RB_RGBLEDMATRIX_Init(unsigned char address);
 		void RB_RGBLEDMATRIX::LED_SledType3Fun1(unsigned char address);
-    void RB_RGBLEDMATRIX::LED_SledType3Fun2(unsigned char address);
-    void RB_RGBLEDMATRIX::RGBLEDMATRIX_DISPALY(uint8_t address,uint16_t *Display_data);
-    void RB_RGBLEDMATRIX::RGBLEDMATRIX_DISPALY1(uint16_t *Display_data,uint16_t *Display_data1);
+        void RB_RGBLEDMATRIX::LED_SledType3Fun2(unsigned char address);
+        void RB_RGBLEDMATRIX::RGBLEDMATRIX_DISPALY1(uint16_t *Display_data,uint16_t *Display_data1);
+        void RB_RGBLEDMATRIX::RGBLEDMATRIX_DATA(uint16_t *Display_data,uint8_t returndata1[16],uint8_t returndata2[16]);
+        void RB_RGBLEDMATRIX::RGBLEDMATRIX_Start(uint8_t d1[16],uint8_t d2[16],uint8_t d3[16],uint8_t d4[16]);
+        
 };
 
 

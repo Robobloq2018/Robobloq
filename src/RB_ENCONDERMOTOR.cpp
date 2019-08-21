@@ -6,7 +6,7 @@
  */
 RB_EncoderMotor:: RB_EncoderMotor(uint8_t port)
 {  
-
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
     _Port_A = encoder_Port[port].port_A;
     _Port_B = encoder_Port[port].port_B;
     _Port_PWM_A = encoder_Port[port].pwm_A;
@@ -16,7 +16,9 @@ RB_EncoderMotor:: RB_EncoderMotor(uint8_t port)
     pinMode(_Port_B,INPUT_PULLUP);
     pinMode(_Port_PWM_A,OUTPUT);
     pinMode(_Port_PWM_B,OUTPUT); 
-   
+  
+
+
     if(_Port_A == 18) 
     {
       _IntterrruptNum = 5;
@@ -43,6 +45,7 @@ RB_EncoderMotor:: RB_EncoderMotor(uint8_t port)
     SetMotorPwm(0);
     SetPulsePos(0);
     _Start_speed_time = millis();  
+   #endif 
 }
 /*
  * 2
@@ -118,7 +121,7 @@ void RB_EncoderMotor::SetTarPWM(int16_t pwm_value)
  */
 void RB_EncoderMotor::SetMotorPwm(int32_t pwm)
 { 
-    pwm = constrain(pwm,-99,99);
+    pwm = constrain(pwm,-100,100);
     if(encoder_structure.previousPwm != pwm){
          encoder_structure.previousPwm = pwm;
    }
@@ -126,26 +129,28 @@ void RB_EncoderMotor::SetMotorPwm(int32_t pwm)
         return;
     }
    encoder_structure.currentPwm = pwm;
+   #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
    if(RB_EncoderMotor::GetIntterrruptNum()==4){
        if(pwm>0){
-            pwm = pwm*1024/100;
+            pwm = pwm*1023/100;
             OCR4A = 0 ; OCR4B = pwm;
        }
        else {
-            pwm = abs(pwm)*1024/100;
+            pwm = abs(pwm)*1023/100;
             OCR4A = pwm ; OCR4B = 0;
        }
    }
    else if(RB_EncoderMotor::GetIntterrruptNum()==5){
        if(pwm>0){
-            pwm = pwm*1024/100;
+            pwm = pwm*1023/100;
             OCR1A = pwm; OCR1B = 0;
        }
        else {
-            pwm = abs(pwm)*1024/100;
+            pwm = abs(pwm)*1023/100;
             OCR1A = 0 ; OCR1B = pwm;
        } 
    }
+   #endif
 }
 /*
  * 13
@@ -263,10 +268,10 @@ void RB_EncoderMotor::SetMotionMode(int16_t motionMode)
  */
 void RB_EncoderMotor::PwmMove(void) 
 { 
-   if(millis() - _Encoder_move_time > 40) 
+   if(millis() - _Encoder_move_time > 5) 
   { 
     _Encoder_move_time = millis(); 
-    encoder_structure.currentPwm = round(0.8 * encoder_structure.currentPwm + 0.2 * encoder_structure.targetPwm); 
+    encoder_structure.currentPwm = round(0.9 * encoder_structure.currentPwm + 0.1 * encoder_structure.targetPwm); 
     if((abs(encoder_structure.currentPwm) <= 10) && (encoder_structure.targetPwm == 0)) 
      { 
        encoder_structure.currentPwm = 0; 

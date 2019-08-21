@@ -3,6 +3,7 @@
 
 #include <inttypes.h>
 #include "RB_PORT.h" 
+
 #define _SOFTI2CMASTER_VERSION 12  // software version of this library
 
 
@@ -11,6 +12,9 @@ class RB_SoftI2CMaster :public RB_Port
 public:
     RB_SoftI2CMaster(uint8_t _sdapin,uint8_t _sclpin);
     RB_SoftI2CMaster(uint8_t port);
+    void SetMode(uint8_t mode);
+    
+ //   RB_SoftI2CMaster(uint8_t port,uint8_t mode);
     void I2C_Star(void);
     uint8_t I2C_Write(uint8_t dat);
     uint8_t I2C_Read(void);
@@ -20,12 +24,10 @@ public:
     void beginTransmission(uint8_t slaveaddress);
     void endTransmission(void);
     uint8_t send(uint8_t data);
-    uint8_t Read_OneByte(uint8_t slaveaddress,uint8_t regaddress);
-    uint16_t RB_SoftI2CMaster::Read_TwoByte(uint8_t slaveaddress,uint8_t regaddress);
-    uint8_t RB_SoftI2CMaster::Write_OneByte(uint8_t slaveaddress,uint8_t regaddress,uint8_t data);
  private:
     uint8_t _SDA;
     uint8_t _SCL;   
+    uint8_t _MODE;
 };
 
 #endif

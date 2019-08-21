@@ -13,8 +13,8 @@ RB_PirSensor::RB_PirSensor(uint8_t port):RB_Port(port)
 	_SigPin = RBPort[port].dat ;
 	_ModePin = RBPort[port].clk ;
 	pinMode(_SigPin,INPUT);
-//	pinMode(_ModePin,OUTPUT);
-//	digitalWrite(_ModePin,HIGH);
+	pinMode(_ModePin,OUTPUT);
+	digitalWrite(_ModePin,LOW);
 }
 
 
@@ -24,7 +24,7 @@ void RB_PirSensor::SetPin(uint8_t sigpin,uint8_t modepin)
 	_ModePin = modepin ;
     pinMode(_SigPin,INPUT);
 	pinMode(_ModePin,OUTPUT);
-	digitalWrite(_ModePin,HIGH);
+	digitalWrite(_ModePin,LOW);
 }
 void RB_PirSensor::SetPirMode(uint8_t Mode)
 {

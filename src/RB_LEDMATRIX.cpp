@@ -2,10 +2,11 @@
 
 RB_LEDMatrix::RB_LEDMatrix(void) :RB_SoftI2CMaster(0)
 {
-  
+  RB_SoftI2CMaster::SetMode(1);
 }
 RB_LEDMatrix::RB_LEDMatrix(uint8_t port):RB_SoftI2CMaster(port)
-{
+{ 
+  RB_SoftI2CMaster::SetMode(1);
   I2C_Star();
   send(TM1680ID);   //  0xE7
   send(SYSDIS);  

@@ -2,7 +2,7 @@
 #include "RB_PORT.h" 
 
 
-
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
 RB_Port_Sig  RBPort[9] =
 {           
    {0.0}, {PWM2,PWM3}, {A6,A7},
@@ -15,6 +15,18 @@ RB_Port_Encoder encoder_Port[3]
   {ENA_A,ENA_B,MOTOR_PWM2,MOTOR_PWM3},
   {ENB_A,ENB_B,MOTOR_PWM0,MOTOR_PWM1},
   } ;
+  
+#else  
+ 
+ RB_Port_Sig   RBPort[5] = 
+{
+   {NC,NC},
+   {A0,A1},
+   {A3,A2},
+   {A5,A4},
+   {PWM0,PWM1}  
+};
+#endif
 /*
  * 
  */

@@ -24,7 +24,8 @@ uint8_t   bI2C_MasTxData[100];
                                     0x00, 0x00, 0x00, 0x00, //C15-A ~ C15-P 
                                     0x00, 0x00, 0x00, 0x00, //C16-A ~ C16-P 
                                     };
-  uint8_t Frame1[16] = {0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,
+
+uint8_t Frame1[16] = {0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,
                         0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00};
   uint8_t Frame2[16] =  {0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00,
                         0X00,0X00,0X00,0X00,0X00,0X00,0X00,0X00};                     
@@ -37,13 +38,13 @@ uint8_t   bI2C_MasTxData[100];
                                 
 RB_RGBLEDMATRIX::RB_RGBLEDMATRIX(void):RB_SoftI2CMaster(0)
 {
-	
+	RB_SoftI2CMaster::SetMode(1);
 	
 }
 
 RB_RGBLEDMATRIX::RB_RGBLEDMATRIX(uint8_t port):RB_SoftI2CMaster(port)
 {
- 
+    RB_SoftI2CMaster::SetMode(1);
 }
 
 void RB_RGBLEDMATRIX::RB_RGBLEDMATRIX_Write2Byte(uint8_t address,uint8_t rgaddress,uint8_t data)
@@ -52,21 +53,24 @@ void RB_RGBLEDMATRIX::RB_RGBLEDMATRIX_Write2Byte(uint8_t address,uint8_t rgaddre
   send(rgaddress);
   send(data);
   endTransmission();
-  //_delay_us(200);
 
 }
 
 void RB_RGBLEDMATRIX::RB_RGBLEDMATRIX_WriteNByte(uint8_t address,uint8_t rgaddress,uint8_t *data,unsigned short datalen)
 {
-  beginTransmission(address);
-  send(rgaddress);
+  
+  RB_SoftI2CMaster::I2C_Star();
+  RB_SoftI2CMaster::I2C_Write(address<<1|0x00);
+  RB_SoftI2CMaster::I2C_GetAck();
+  RB_SoftI2CMaster::I2C_Write(rgaddress);
+  RB_SoftI2CMaster::I2C_GetAck();
   while(datalen--)
   {
-	  send(*data);
-
-      data++;
+   RB_SoftI2CMaster::I2C_Write(*data);
+   RB_SoftI2CMaster::I2C_GetAck();
+   data++;
   }
-  endTransmission();
+  RB_SoftI2CMaster::I2C_Stop();
 }
 void RB_RGBLEDMATRIX::LED_Type3ClearFrame1Page(unsigned char address)
 {
@@ -94,64 +98,28 @@ void RB_RGBLEDMATRIX::LED_Type3ClearFrame2Page(unsigned char address)
 void RB_RGBLEDMATRIX::RB_RGBLEDMATRIX_Init(unsigned char address)
 {   
   
-    //Setting SLED1735 Ram Page to Function Page
 	RB_RGBLEDMATRIX_Write2Byte(address,CONFIGURE_CMD_PAGE, FUNCTION_PAGE);
- 
-	// System must go to SW shutdowm mode when initialization
-     RB_RGBLEDMATRIX_Write2Byte(address,0X0A, 0x00);	
-  // RB_RGBLEDMATRIX_Write2Byte(address,SW_SHUT_DOWN_REG, mskSW_SHUT_DOWN_MODE); 
-	//Setting Matrix Type = Type3
+  RB_RGBLEDMATRIX_Write2Byte(address,0X0A, 0x00);	
 	RB_RGBLEDMATRIX_Write2Byte(address,PICTURE_DISPLAY_REG, 0x10);	
-	//Setting Staggered Delay 
 	RB_RGBLEDMATRIX_Write2Byte(address,STAGGERED_DELAY_REG, ((mskSTD4 & CONST_STD_GROUP4)|(mskSTD3 & CONST_STD_GROUP3)|(mskSTD2 & CONST_STD_GROUP2)|(mskSTD1 & CONST_STD_GROUP1)));
-	//Enable Slew Rate control 
 	RB_RGBLEDMATRIX_Write2Byte(address,SLEW_RATE_CTL_REG, mskSLEW_RATE_CTL_EN);
-	
-	//===============================================================
-	//VAF Control settings base on the LED type.
-	//================================================================
-
 	RB_RGBLEDMATRIX_Write2Byte(address,VAF_CTL_REG, (mskVAF2|mskVAF1));
 	RB_RGBLEDMATRIX_Write2Byte(address,VAF_CTL_REG2, (mskFORCEVAFCTL_DISABLE|mskFORCEVAFTIME_CONST|mskVAF3));
-	
-	//================================================================
-	//Setting LED driving current = 20mA and Enable current control	
 	RB_RGBLEDMATRIX_Write2Byte(address,CURRENT_CTL_REG, (mskCURRENT_CTL_EN|CONST_CURRENT_STEP_20mA));
-	
-	//Init Frame1Page and Frame2Page(Clear all Ram)
-
 	LED_Type3ClearFrame1Page(address);	
-	LED_Type3ClearFrame2Page(address);		
-	//======================================================//
-	//Init Type3 FrameVAFPage : Single R/G/B ,              //
-	//Anode RGB or Cathode RGB have different VAF settings  //
-	//which can choice by " TYPE2_VAF_OPTION ".             //
-	//======================================================//	
+	LED_Type3ClearFrame2Page(address);	
 	RB_RGBLEDMATRIX_Write2Byte(address,CONFIGURE_CMD_PAGE, LED_VAF_PAGE);
 	for(int i = 0;i < TYPE3_VAF_FRAME_LENGTH;i++)
 	{
 		bI2C_MasTxData[i] = tabLED_Type3Vaf[i];
 	}
 	RB_RGBLEDMATRIX_WriteNByte(address,TYPE3_VAF_FRAME_FIRST_ADDR,bI2C_MasTxData, TYPE3_VAF_FRAME_LENGTH-1);
-	
-	//After initialization , system back to SW Normal mode.
 	RB_RGBLEDMATRIX_Write2Byte(address,CONFIGURE_CMD_PAGE, FUNCTION_PAGE);
 	RB_RGBLEDMATRIX_Write2Byte(address,SW_SHUT_DOWN_REG, mskSW_NORMAL_MODE);	
   LED_SledType3Fun1(address);
- LED_SledType3Fun2(address);
+  LED_SledType3Fun2(address);
 
 }
-
-
-
-/*****************************************************************************
-* Function		: LED_SledType3Fun1 : Column Scan
-* Description	: Column by Column Light on LED Panel 
-* Input			: None
-* Output		: None
-* Return		: None
-* Note			: None
-*****************************************************************************/
 void RB_RGBLEDMATRIX::LED_SledType3Fun1(unsigned char address)
 {
 	uint32_t i;
@@ -159,40 +127,21 @@ void RB_RGBLEDMATRIX::LED_SledType3Fun1(unsigned char address)
 	// System must go to SW shutdowm mode
 	RB_RGBLEDMATRIX_Write2Byte(address,CONFIGURE_CMD_PAGE, FUNCTION_PAGE);//   __LED_SelectFunctionPage;
 	RB_RGBLEDMATRIX_Write2Byte(address,SW_SHUT_DOWN_REG, mskSW_SHUT_DOWN_MODE);
-	
-	//=====================================//
-	//Clear LED CTL Registers (Frame1Page) //
-	//=====================================//			
-	RB_RGBLEDMATRIX_Write2Byte(address,CONFIGURE_CMD_PAGE, FRAME1_PAGE);//__LED_SelectFrame1Page;	
-	//Write LED Control Data=0x00 to bI2C_MasTxData[] FIFO , then send N bytes length Data bt I2C		
+		
+	RB_RGBLEDMATRIX_Write2Byte(address,CONFIGURE_CMD_PAGE, FRAME1_PAGE);//__LED_SelectFrame1Page;		
 	for( i = 0; i< TYPE3_LED_FRAME_LENGTH ; i++)
 	{
 		bI2C_MasTxData[i] = 0X00;
 	}
 	RB_RGBLEDMATRIX_WriteNByte(address,TYPE3_LED_FRAME_FIRST_ADDR,bI2C_MasTxData, TYPE3_LED_FRAME_LENGTH-1);
-	//=========================================================//
-	//SET PWM CTL Registers Value =0xFF(Max Value, Frame1Page) //
-	//=========================================================//		
-	//Write PWM Control Data=0xFF to bI2C_MasTxData[] FIFO , then send N bytes length Data bt I2C	
 	for( i = 0; i< TYPE3_PWM_FRAME_LENGTH ; i++)
 	{
-		bI2C_MasTxData[i] = 0xff;
+		bI2C_MasTxData[i] = 0x55;
 	}
-	//send TYPE3_PWM_FRAME_LENGTH bytes Data from I2C	
   RB_RGBLEDMATRIX_WriteNByte(address,TYPE3_PWM_FRAME_FIRST_ADDR,bI2C_MasTxData,TYPE3_PWM_FRAME_LENGTH-1);	
 
-	//=====================================//
-	//Clear LED CTL Registers (Frame2Page) //
-	//=====================================//		
-	//System back to SW Normal mode.		
-	//__LED_SelectFunctionPage;	
   RB_RGBLEDMATRIX_Write2Byte(address,CONFIGURE_CMD_PAGE, FUNCTION_PAGE);
 	RB_RGBLEDMATRIX_Write2Byte(address,SW_SHUT_DOWN_REG, mskSW_NORMAL_MODE);	
-
- // RB_RGBLEDMATRIX_Write2Byte(address,CONFIGURE_CMD_PAGE, FRAME1_PAGE);//__LED_SelectFrame1Page;  
-// RB_RGBLEDMATRIX_Write2Byte(address,(mskLED_FRAME_REG_ADDR & 0x00), (mskLED_FRAME_REG_DATA & 0xFF));
-
- 
 
 }
 
@@ -200,15 +149,10 @@ void RB_RGBLEDMATRIX::LED_SledType3Fun2(unsigned char address)
 {
   uint32_t i;
     
-  // System must go to SW shutdowm mode
   RB_RGBLEDMATRIX_Write2Byte(address,CONFIGURE_CMD_PAGE, FUNCTION_PAGE);//   __LED_SelectFunctionPage;
   RB_RGBLEDMATRIX_Write2Byte(address,SW_SHUT_DOWN_REG, mskSW_SHUT_DOWN_MODE);
-  
-  //=====================================//
-  //Clear LED CTL Registers (Frame1Page) //
-  //=====================================//     
+    
   RB_RGBLEDMATRIX_Write2Byte(address,CONFIGURE_CMD_PAGE, FRAME2_PAGE);//__LED_SelectFrame1Page;  
-  //Write LED Control Data=0x00 to bI2C_MasTxData[] FIFO , then send N bytes length Data bt I2C   
   for( i = 0; i< TYPE3_LED_FRAME_LENGTH ; i++)
   {
     bI2C_MasTxData[i] = 0X00;
@@ -216,204 +160,18 @@ void RB_RGBLEDMATRIX::LED_SledType3Fun2(unsigned char address)
    
   RB_RGBLEDMATRIX_WriteNByte(address,TYPE3_LED_FRAME_FIRST_ADDR,bI2C_MasTxData, TYPE3_LED_FRAME_LENGTH-1);
   
-  //=========================================================//
-  //SET PWM CTL Registers Value =0xFF(Max Value, Frame1Page) //
-  //=========================================================//   
-  //Write PWM Control Data=0xFF to bI2C_MasTxData[] FIFO , then send N bytes length Data bt I2C 
+
   for( i = 0; i< TYPE3_PWM_FRAME_LENGTH ; i++)
   {
-    bI2C_MasTxData[i] = 0xff;
+    bI2C_MasTxData[i] = 0x55;
   }
-  //send TYPE3_PWM_FRAME_LENGTH bytes Data from I2C 
+
   RB_RGBLEDMATRIX_WriteNByte(address,TYPE3_PWM_FRAME_FIRST_ADDR,bI2C_MasTxData,TYPE3_PWM_FRAME_LENGTH-1);  
-
-  //=====================================//
-  //Clear LED CTL Registers (Frame2Page) //
-  //=====================================//   
-  //System back to SW Normal mode.    
-  //__LED_SelectFunctionPage; 
-    RB_RGBLEDMATRIX_Write2Byte(address,CONFIGURE_CMD_PAGE, FUNCTION_PAGE);
-    RB_RGBLEDMATRIX_Write2Byte(address,SW_SHUT_DOWN_REG, mskSW_NORMAL_MODE);
-
- //   RB_RGBLEDMATRIX_Write2Byte(address,(mskLED_FRAME_REG_ADDR & 0x00), (mskLED_FRAME_REG_DATA & 0xFF));
- //   RB_RGBLEDMATRIX_Write2Byte(address,(mskLED_FRAME_REG_ADDR & 0x01), (mskLED_FRAME_REG_DATA & 0xFF));
-  //  I2C_W_2BYTE((mskLED_FRAME_REG_ADDR & 0x01), (mskLED_FRAME_REG_DATA & 0xFF));  
-
-
-  
+  RB_RGBLEDMATRIX_Write2Byte(address,CONFIGURE_CMD_PAGE, FUNCTION_PAGE);
+  RB_RGBLEDMATRIX_Write2Byte(address,SW_SHUT_DOWN_REG, mskSW_NORMAL_MODE);
 }
 
 
-
-
-
-void RB_RGBLEDMATRIX::RGBLEDMATRIX_DISPALY(uint8_t address,uint16_t *Display_data)
-{
-      uint16_t data;
-      uint16_t i;
-      data = 0;
-
-      data  |= (((Display_data[0]&0x01)<<0))|(((Display_data[0]&0x02)>>1)<<1)|(((Display_data[0]&0x04)>>2)<<2);
-      data  |= (((Display_data[1]&0x01)<<3))|(((Display_data[1]&0x02)>>1)<<4)|(((Display_data[1]&0x04)>>2)<<5);
-      data  |= (((Display_data[2]&0x01)<<6))|(((Display_data[2]&0x02)>>1)<<7)|(((Display_data[2]&0x04)>>2)<<8);
-      data  |= (((Display_data[3]&0x01)<<9))|(((Display_data[3]&0x02)>>1)<<10)|(((Display_data[3]&0x04)>>2)<<11);
-      data  |= (((Display_data[4]&0x01)<<12))|(((Display_data[4]&0x02)>>1)<<13)|(((Display_data[4]&0x04)>>2)<<14);
-
-      Frame1[0]  = (unsigned char)(data%256);
-      Frame1[1]  = (unsigned char)(data/256);
-    
-      data = 0;
-     
-      data  |= (((Display_data[7]&0x01)<<3))|(((Display_data[7]&0x02)>>1)<<4)|(((Display_data[7]&0x04)>>2)<<5);
-      data  |= (((Display_data[8]&0x01)<<6))|(((Display_data[8]&0x02)>>1)<<7)|(((Display_data[8]&0x04)>>2)<<8);
-      data  |= (((Display_data[9]&0x01)<<9))|(((Display_data[9]&0x02)>>1)<<10)|(((Display_data[9]&0x04)>>2)<<11);
-      data  |= (((Display_data[10]&0x01)<<12))|(((Display_data[10]&0x02)>>1)<<13)|(((Display_data[10]&0x04)>>2)<<14);
-
-      Frame1[2]  = (unsigned char)(data%256);
-      Frame1[3]  = (unsigned char)(data/256);
-     
-      data = 0;
-      data  |= (((Display_data[6]&0x01)<<1))|(((Display_data[6]&0x02)>>1)<<0)|(((Display_data[6]&0x04)>>2)<<2);
-      data  |= (((Display_data[13]&0x01)<<3))|(((Display_data[13]&0x02)>>1)<<4)|(((Display_data[13]&0x04)>>2)<<5);
-      data  |= (((Display_data[14]&0x01)<<6))|(((Display_data[14]&0x02)>>1)<<7)|(((Display_data[14]&0x04)>>2)<<8);
-      data  |= (((Display_data[15]&0x01)<<9))|(((Display_data[15]&0x02)>>1)<<10)|(((Display_data[15]&0x04)>>2)<<11);
-      data  |= (((Display_data[5]&0x01)<<12))|(((Display_data[5]&0x02)>>1)<<13)|(((Display_data[5]&0x04)>>2)<<14);
-
-      Frame1[4]  = (unsigned char)(data%256);
-      Frame1[5]  = (unsigned char)(data/256);
-     
-
-      data = 0;
-      data  |= (((Display_data[12]&0x01)<<1))|(((Display_data[12]&0x02)>>1)<<2)|(((Display_data[12]&0x04)>>2)<<15);
-      data  |= (((Display_data[19]&0x01)<<3))|(((Display_data[19]&0x02)>>1)<<4)|(((Display_data[19]&0x04)>>2)<<5);
-      data  |= (((Display_data[20]&0x01)<<6))|(((Display_data[20]&0x02)>>1)<<7)|(((Display_data[20]&0x04)>>2)<<8);
-      data  |= (((Display_data[21]&0x01)<<9))|(((Display_data[21]&0x02)>>1)<<10)|(((Display_data[21]&0x04)>>2)<<11);
-      data  |= (((Display_data[11]&0x01)<<12))|(((Display_data[11]&0x02)>>1)<<13)|(((Display_data[11]&0x04)>>2)<<14);
-
-      Frame1[6]  = (unsigned char)(data%256);
-      Frame1[7]  = (unsigned char)(data/256);
-     
-      data = 0;
-      data  |= (((Display_data[18]&0x01)<<1))|(((Display_data[18]&0x02)>>1)<<2)|(((Display_data[18]&0x04)>>2)<<3);
-      data  |= (((Display_data[26]&0x01)<<6))|(((Display_data[26]&0x02)>>1)<<7)|(((Display_data[26]&0x04)>>2)<<8);
-      data  |= (((Display_data[16]&0x01)<<9))|(((Display_data[16]&0x02)>>1)<<10)|(((Display_data[16]&0x04)>>2)<<11);
-      data  |= (((Display_data[17]&0x01)<<12))|(((Display_data[17]&0x02)>>1)<<13)|(((Display_data[17]&0x04)>>2)<<14);
-
-      Frame1[8]  = (unsigned char)(data%256);
-      Frame1[9]  = (unsigned char)(data/256);
-     
-
-      data = 0;
-      data  |= (((Display_data[25]&0x01)<<4))|(((Display_data[25]&0x02)>>1))|(((Display_data[25]&0x04)>>2)<<5);
-      data  |= (((Display_data[24]&0x01)<<1))|(((Display_data[24]&0x02)>>1)<<2)|(((Display_data[24]&0x04)>>2)<<3);
-      data  |= (((Display_data[32]&0x01)<<6))|(((Display_data[32]&0x02)>>1)<<7)|(((Display_data[32]&0x04)>>2)<<8);
-      data  |= (((Display_data[22]&0x01)<<9))|(((Display_data[22]&0x02)>>1)<<10)|(((Display_data[22]&0x04)>>2)<<11);
-      data  |= (((Display_data[23]&0x01)<<12))|(((Display_data[23]&0x02)>>1)<<13)|(((Display_data[23]&0x04)>>2)<<14);
-
-      Frame1[10]  = (unsigned char)(data%256);
-      Frame1[11]  = (unsigned char)(data/256);
- 
-
-      data = 0;
-      data  |= (((Display_data[30]&0x01)<<1))|(((Display_data[30]&0x02)>>1)<<2)|(((Display_data[30]&0x04)>>2)<<3);
-      data  |= (((Display_data[31]&0x01)<<4))|(((Display_data[31]&0x02)>>1)<<5)|(((Display_data[31]&0x04)>>2)<<15);
-      data  |= (((Display_data[27]&0x01)<<6))|(((Display_data[27]&0x02)>>1)<<7)|(((Display_data[27]&0x04)>>2)<<8);
-      data  |= (((Display_data[28]&0x01)<<9))|(((Display_data[28]&0x02)>>1)<<10)|(((Display_data[28]&0x04)>>2)<<11);
-      data  |= (((Display_data[29]&0x01)<<12))|(((Display_data[29]&0x02)>>1)<<13)|(((Display_data[29]&0x04)>>2)<<14);
-
-      Frame1[12]  = (unsigned char)(data%256);
-      Frame1[13]  = (unsigned char)(data/256);
-     
-
-      data = 0;
-      data  |= (((Display_data[36]&0x01)<<1))|(((Display_data[36]&0x02)>>1)<<2)|(((Display_data[36]&0x04)>>2)<<3);
-      data  |= (((Display_data[37]&0x01)<<4))|(((Display_data[37]&0x02)>>1)<<5)|(((Display_data[37]&0x04)>>2)<<6);
-      data  |= (((Display_data[34]&0x01)<<9))|(((Display_data[34]&0x02)>>1)<<10)|(((Display_data[34]&0x04)>>2)<<11);
-      data  |= (((Display_data[35]&0x01)<<12))|(((Display_data[35]&0x02)>>1)<<13)|(((Display_data[35]&0x04)>>2)<<14);
-
-      Frame1[14]  = (unsigned char)(data%256);
-      Frame1[15]  = (unsigned char)(data/256);
-  
-
-     
-      data = 0;
-      data  |= (((Display_data[42]&0x01)<<1))|(((Display_data[42]&0x02)>>1)<<2)|(((Display_data[42]&0x04)>>2)<<3);
-      data  |= (((Display_data[43]&0x01)<<4))|(((Display_data[43]&0x02)>>1)<<5)|(((Display_data[43]&0x04)>>2)<<6);
-      data  |= (((Display_data[33]&0x01)<<7))|(((Display_data[33]&0x02)>>1)<<0)|(((Display_data[33]&0x04)>>2)<<8);
-      data  |= (((Display_data[40]&0x01)<<9))|(((Display_data[40]&0x02)>>1)<<10)|(((Display_data[40]&0x04)>>2)<<11);
-      data  |= (((Display_data[41]&0x01)<<12))|(((Display_data[41]&0x02)>>1)<<13)|(((Display_data[41]&0x04)>>2)<<14);
-
-      Frame2[0]  = (unsigned char)(data%256);
-      Frame2[1]  = (unsigned char)(data/256);
-     
-
-      data = 0;
-      data  |= (((Display_data[48]&0x01)<<1))|(((Display_data[48]&0x02)>>1)<<2)|(((Display_data[48]&0x04)>>2)<<3);
-      data  |= (((Display_data[49]&0x01)<<4))|(((Display_data[49]&0x02)>>1)<<5)|(((Display_data[49]&0x04)>>2)<<6);
-      data  |= (((Display_data[39]&0x01)<<7))|(((Display_data[39]&0x02)>>1)<<8)|(((Display_data[39]&0x04)>>2)<<15);
-      data  |= (((Display_data[46]&0x01)<<9))|(((Display_data[46]&0x02)>>1)<<10)|(((Display_data[46]&0x04)>>2)<<11);
-      data  |= (((Display_data[47]&0x01)<<12))|(((Display_data[47]&0x02)>>1)<<13)|(((Display_data[47]&0x04)>>2)<<14);
-
-      Frame2[2]  = (unsigned char)(data%256);
-      Frame2[3]  = (unsigned char)(data/256);
-  
-      data = 0;
-      data  |= (((Display_data[54]&0x01)<<1))|(((Display_data[54]&0x02)>>1)<<2)|(((Display_data[54]&0x04)>>2)<<3);
-      data  |= (((Display_data[38]&0x01)<<4))|(((Display_data[38]&0x02)>>1)<<5)|(((Display_data[38]&0x04)>>2)<<6);
-      data  |= (((Display_data[45]&0x01)<<7))|(((Display_data[45]&0x02)>>1)<<8)|(((Display_data[45]&0x04)>>2)<<9);
-      data  |= (((Display_data[53]&0x01)<<12))|(((Display_data[53]&0x02)>>1)<<13)|(((Display_data[53]&0x04)>>2)<<14);
-
-      Frame2[4]  = (unsigned char)(data%256);
-      Frame2[5]  = (unsigned char)(data/256);
-      
-      data = 0;
-      data  |= (((Display_data[60]&0x01)<<1))|(((Display_data[60]&0x02)>>1)<<2)|(((Display_data[60]&0x04)>>2)<<3);
-      data  |= (((Display_data[44]&0x01)<<4))|(((Display_data[44]&0x02)>>1)<<5)|(((Display_data[44]&0x04)>>2)<<6);
-      data  |= (((Display_data[51]&0x01)<<7))|(((Display_data[51]&0x02)>>1)<<8)|(((Display_data[51]&0x04)>>2)<<9);
-      data  |= (((Display_data[52]&0x01)<<10))|(((Display_data[52]&0x02)>>1)<<0)|(((Display_data[52]&0x04)>>2)<<11);
-      data  |= (((Display_data[59]&0x01)<<12))|(((Display_data[59]&0x02)>>1)<<13)|(((Display_data[59]&0x04)>>2)<<14);
-
-      Frame2[6]  = (unsigned char)(data%256);
-      Frame2[7]  = (unsigned char)(data/256);
- 
-      data = 0;
-      data  |= (((Display_data[66]&0x01)<<1))|(((Display_data[66]&0x02)>>1)<<2)|(((Display_data[66]&0x04)>>2)<<3);
-      data  |= (((Display_data[50]&0x01)<<4))|(((Display_data[50]&0x02)>>1)<<5)|(((Display_data[50]&0x04)>>2)<<6);
-      data  |= (((Display_data[57]&0x01)<<7))|(((Display_data[57]&0x02)>>1)<<8)|(((Display_data[57]&0x04)>>2)<<9);
-      data  |= (((Display_data[58]&0x01)<<10))|(((Display_data[58]&0x02)>>1)<<11)|(((Display_data[58]&0x04)>>2)<<15);
-      data  |= (((Display_data[65]&0x01)<<12))|(((Display_data[65]&0x02)>>1)<<13)|(((Display_data[65]&0x04)>>2)<<14);
-
-      Frame2[8]  = (unsigned char)(data%256);
-      Frame2[9]  = (unsigned char)(data/256);
-      
-      data = 0;
-      data  |= (((Display_data[55]&0x01)<<1))|(((Display_data[55]&0x02)>>1)<<2)|(((Display_data[55]&0x04)>>2)<<3);
-      data  |= (((Display_data[56]&0x01)<<4))|(((Display_data[56]&0x02)>>1)<<5)|(((Display_data[56]&0x04)>>2)<<6);
-      data  |= (((Display_data[63]&0x01)<<7))|(((Display_data[63]&0x02)>>1)<<8)|(((Display_data[63]&0x04)>>2)<<9);
-      data  |= (((Display_data[64]&0x01)<<10))|(((Display_data[64]&0x02)>>1)<<11)|(((Display_data[64]&0x04)>>2)<<12);
-
-
-      Frame2[10]  = (unsigned char)(data%256);
-      Frame2[11]  = (unsigned char)(data/256);
-   
-      data = 0;
-      data  |= (((Display_data[61]&0x01)<<1))|(((Display_data[61]&0x02)>>1)<<2)|(((Display_data[61]&0x04)>>2)<<3);
-      data  |= (((Display_data[62]&0x01)<<4))|(((Display_data[62]&0x02)>>1)<<5)|(((Display_data[62]&0x04)>>2)<<6);
-      data  |= (((Display_data[69]&0x01)<<7))|(((Display_data[69]&0x02)>>1)<<8)|(((Display_data[69]&0x04)>>2)<<9);
-      data  |= (((Display_data[70]&0x01)<<10))|(((Display_data[70]&0x02)>>1)<<11)|(((Display_data[70]&0x04)>>2)<<12);
-      data  |= (((Display_data[71]&0x01)<<13))|(((Display_data[71]&0x02)>>1)<<0)|(((Display_data[71]&0x04)>>2)<<14);
-
-      Frame2[12]  = (unsigned char)(data%256);
-      Frame2[13]  = (unsigned char)(data/256);
-    ;
-      data = 0;
-      data  |= (((Display_data[67]&0x01)<<1))|(((Display_data[67]&0x02)>>1)<<2)|(((Display_data[67]&0x04)>>2)<<3);
-      data  |= (((Display_data[68]&0x01)<<4))|(((Display_data[68]&0x02)>>1)<<5)|(((Display_data[68]&0x04)>>2)<<6);
-      Frame2[14]  = (unsigned char)(data%256);
-      Frame2[15]  = (unsigned char)(data/256);
-      
-  
-}
 
 void RB_RGBLEDMATRIX::RGBLEDMATRIX_DISPALY1(uint16_t *Display_data,uint16_t *Display_data1)
 {
@@ -740,12 +498,194 @@ void RB_RGBLEDMATRIX::RGBLEDMATRIX_DISPALY1(uint16_t *Display_data,uint16_t *Dis
       data  |= (((Display_data1[68]&0x01)<<4))|(((Display_data1[68]&0x02)>>1)<<5)|(((Display_data1[68]&0x04)>>2)<<6);
       Frame4[14]  = (unsigned char)(data%256);
       Frame4[15]  = (unsigned char)(data/256);
-      RB_RGBLEDMATRIX_Write2Byte(0x74,CONFIGURE_CMD_PAGE, FRAME1_PAGE);//__LED_SelectFrame1Page;  
-      RB_RGBLEDMATRIX_WriteNByte(0x74,0X00,Frame1, TYPE3_LED_FRAME_LENGTH);
-      RB_RGBLEDMATRIX_Write2Byte(0x74,CONFIGURE_CMD_PAGE, FRAME2_PAGE);//__LED_SelectFrame1Page;
-      RB_RGBLEDMATRIX_WriteNByte(0x74,0X00,Frame2, TYPE3_LED_FRAME_LENGTH);
+
+      
       RB_RGBLEDMATRIX_Write2Byte(0x77,CONFIGURE_CMD_PAGE, FRAME1_PAGE);//__LED_SelectFrame1Page;  
       RB_RGBLEDMATRIX_WriteNByte(0x77,0X00,Frame3, TYPE3_LED_FRAME_LENGTH);
+      RB_RGBLEDMATRIX_Write2Byte(0x74,CONFIGURE_CMD_PAGE, FRAME1_PAGE);//__LED_SelectFrame1Page;  
+      RB_RGBLEDMATRIX_WriteNByte(0x74,0X00,Frame1, TYPE3_LED_FRAME_LENGTH);
       RB_RGBLEDMATRIX_Write2Byte(0x77,CONFIGURE_CMD_PAGE, FRAME2_PAGE);//__LED_SelectFrame1Page;
       RB_RGBLEDMATRIX_WriteNByte(0x77,0X00,Frame4, TYPE3_LED_FRAME_LENGTH);
+      RB_RGBLEDMATRIX_Write2Byte(0x74,CONFIGURE_CMD_PAGE, FRAME2_PAGE);//__LED_SelectFrame1Page;
+      RB_RGBLEDMATRIX_WriteNByte(0x74,0X00,Frame2, TYPE3_LED_FRAME_LENGTH);
+      
+}
+
+
+void RB_RGBLEDMATRIX::RGBLEDMATRIX_DATA(uint16_t *Display_data,uint8_t returndata1[16],uint8_t returndata2[16])
+{
+
+      uint16_t data;
+      data = 0;
+      data  |= (((Display_data[0]&0x01)<<0))|(((Display_data[0]&0x02)>>1)<<1)|(((Display_data[0]&0x04)>>2)<<2);
+      data  |= (((Display_data[1]&0x01)<<3))|(((Display_data[1]&0x02)>>1)<<4)|(((Display_data[1]&0x04)>>2)<<5);
+      data  |= (((Display_data[2]&0x01)<<6))|(((Display_data[2]&0x02)>>1)<<7)|(((Display_data[2]&0x04)>>2)<<8);
+      data  |= (((Display_data[3]&0x01)<<9))|(((Display_data[3]&0x02)>>1)<<10)|(((Display_data[3]&0x04)>>2)<<11);
+      data  |= (((Display_data[4]&0x01)<<12))|(((Display_data[4]&0x02)>>1)<<13)|(((Display_data[4]&0x04)>>2)<<14);
+
+      returndata1[0]  = (unsigned char)(data%256);
+      returndata1[1]  = (unsigned char)(data/256);
+    
+      data = 0;
+     
+      data  |= (((Display_data[7]&0x01)<<3))|(((Display_data[7]&0x02)>>1)<<4)|(((Display_data[7]&0x04)>>2)<<5);
+      data  |= (((Display_data[8]&0x01)<<6))|(((Display_data[8]&0x02)>>1)<<7)|(((Display_data[8]&0x04)>>2)<<8);
+      data  |= (((Display_data[9]&0x01)<<9))|(((Display_data[9]&0x02)>>1)<<10)|(((Display_data[9]&0x04)>>2)<<11);
+      data  |= (((Display_data[10]&0x01)<<12))|(((Display_data[10]&0x02)>>1)<<13)|(((Display_data[10]&0x04)>>2)<<14);
+
+      returndata1[2]  = (unsigned char)(data%256);
+      returndata1[3]  =(unsigned char)(data/256);
+     
+      data = 0;
+      data  |= (((Display_data[6]&0x01)<<1))|(((Display_data[6]&0x02)>>1)<<0)|(((Display_data[6]&0x04)>>2)<<2);
+      data  |= (((Display_data[13]&0x01)<<3))|(((Display_data[13]&0x02)>>1)<<4)|(((Display_data[13]&0x04)>>2)<<5);
+      data  |= (((Display_data[14]&0x01)<<6))|(((Display_data[14]&0x02)>>1)<<7)|(((Display_data[14]&0x04)>>2)<<8);
+      data  |= (((Display_data[15]&0x01)<<9))|(((Display_data[15]&0x02)>>1)<<10)|(((Display_data[15]&0x04)>>2)<<11);
+      data  |= (((Display_data[5]&0x01)<<12))|(((Display_data[5]&0x02)>>1)<<13)|(((Display_data[5]&0x04)>>2)<<14);
+
+      returndata1[4]  = (unsigned char)(data%256);
+      returndata1[5]  = (unsigned char)(data/256);
+     
+
+      data = 0;
+      data  |= (((Display_data[12]&0x01)<<1))|(((Display_data[12]&0x02)>>1)<<2)|(((Display_data[12]&0x04)>>2)<<15);
+      data  |= (((Display_data[19]&0x01)<<3))|(((Display_data[19]&0x02)>>1)<<4)|(((Display_data[19]&0x04)>>2)<<5);
+      data  |= (((Display_data[20]&0x01)<<6))|(((Display_data[20]&0x02)>>1)<<7)|(((Display_data[20]&0x04)>>2)<<8);
+      data  |= (((Display_data[21]&0x01)<<9))|(((Display_data[21]&0x02)>>1)<<10)|(((Display_data[21]&0x04)>>2)<<11);
+      data  |= (((Display_data[11]&0x01)<<12))|(((Display_data[11]&0x02)>>1)<<13)|(((Display_data[11]&0x04)>>2)<<14);
+
+      returndata1[6]  = (unsigned char)(data%256);
+      returndata1[7]  = (unsigned char)(data/256);
+     
+      data = 0;
+      data  |= (((Display_data[18]&0x01)<<1))|(((Display_data[18]&0x02)>>1)<<2)|(((Display_data[18]&0x04)>>2)<<3);
+      data  |= (((Display_data[26]&0x01)<<6))|(((Display_data[26]&0x02)>>1)<<7)|(((Display_data[26]&0x04)>>2)<<8);
+      data  |= (((Display_data[16]&0x01)<<9))|(((Display_data[16]&0x02)>>1)<<10)|(((Display_data[16]&0x04)>>2)<<11);
+      data  |= (((Display_data[17]&0x01)<<12))|(((Display_data[17]&0x02)>>1)<<13)|(((Display_data[17]&0x04)>>2)<<14);
+
+      returndata1[8]  = (unsigned char)(data%256);
+      returndata1[9]  = (unsigned char)(data/256);
+     
+
+      data = 0;
+      data  |= (((Display_data[25]&0x01)<<4))|(((Display_data[25]&0x02)>>1))|(((Display_data[25]&0x04)>>2)<<5);
+      data  |= (((Display_data[24]&0x01)<<1))|(((Display_data[24]&0x02)>>1)<<2)|(((Display_data[24]&0x04)>>2)<<3);
+      data  |= (((Display_data[32]&0x01)<<6))|(((Display_data[32]&0x02)>>1)<<7)|(((Display_data[32]&0x04)>>2)<<8);
+      data  |= (((Display_data[22]&0x01)<<9))|(((Display_data[22]&0x02)>>1)<<10)|(((Display_data[22]&0x04)>>2)<<11);
+      data  |= (((Display_data[23]&0x01)<<12))|(((Display_data[23]&0x02)>>1)<<13)|(((Display_data[23]&0x04)>>2)<<14);
+
+      returndata1[10]  = (unsigned char)(data%256);
+      returndata1[11]  = (unsigned char)(data/256);
+ 
+
+      data = 0;
+      data  |= (((Display_data[30]&0x01)<<1))|(((Display_data[30]&0x02)>>1)<<2)|(((Display_data[30]&0x04)>>2)<<3);
+      data  |= (((Display_data[31]&0x01)<<4))|(((Display_data[31]&0x02)>>1)<<5)|(((Display_data[31]&0x04)>>2)<<15);
+      data  |= (((Display_data[27]&0x01)<<6))|(((Display_data[27]&0x02)>>1)<<7)|(((Display_data[27]&0x04)>>2)<<8);
+      data  |= (((Display_data[28]&0x01)<<9))|(((Display_data[28]&0x02)>>1)<<10)|(((Display_data[28]&0x04)>>2)<<11);
+      data  |= (((Display_data[29]&0x01)<<12))|(((Display_data[29]&0x02)>>1)<<13)|(((Display_data[29]&0x04)>>2)<<14);
+
+      returndata1[12]  = (unsigned char)(data%256);
+      returndata1[13]  = (unsigned char)(data/256);
+     
+
+      data = 0;
+      data  |= (((Display_data[36]&0x01)<<1))|(((Display_data[36]&0x02)>>1)<<2)|(((Display_data[36]&0x04)>>2)<<3);
+      data  |= (((Display_data[37]&0x01)<<4))|(((Display_data[37]&0x02)>>1)<<5)|(((Display_data[37]&0x04)>>2)<<6);
+      data  |= (((Display_data[34]&0x01)<<9))|(((Display_data[34]&0x02)>>1)<<10)|(((Display_data[34]&0x04)>>2)<<11);
+      data  |= (((Display_data[35]&0x01)<<12))|(((Display_data[35]&0x02)>>1)<<13)|(((Display_data[35]&0x04)>>2)<<14);
+
+      returndata1[14]  = (unsigned char)(data%256);
+      returndata1[15]  = (unsigned char)(data/256);
+  
+
+     
+      data = 0;
+      data  |= (((Display_data[42]&0x01)<<1))|(((Display_data[42]&0x02)>>1)<<2)|(((Display_data[42]&0x04)>>2)<<3);
+      data  |= (((Display_data[43]&0x01)<<4))|(((Display_data[43]&0x02)>>1)<<5)|(((Display_data[43]&0x04)>>2)<<6);
+      data  |= (((Display_data[33]&0x01)<<7))|(((Display_data[33]&0x02)>>1)<<0)|(((Display_data[33]&0x04)>>2)<<8);
+      data  |= (((Display_data[40]&0x01)<<9))|(((Display_data[40]&0x02)>>1)<<10)|(((Display_data[40]&0x04)>>2)<<11);
+      data  |= (((Display_data[41]&0x01)<<12))|(((Display_data[41]&0x02)>>1)<<13)|(((Display_data[41]&0x04)>>2)<<14);
+
+      returndata2[0]  = (unsigned char)(data%256);
+      returndata2[1]  = (unsigned char)(data/256);
+     
+
+      data = 0;
+      data  |= (((Display_data[48]&0x01)<<1))|(((Display_data[48]&0x02)>>1)<<2)|(((Display_data[48]&0x04)>>2)<<3);
+      data  |= (((Display_data[49]&0x01)<<4))|(((Display_data[49]&0x02)>>1)<<5)|(((Display_data[49]&0x04)>>2)<<6);
+      data  |= (((Display_data[39]&0x01)<<7))|(((Display_data[39]&0x02)>>1)<<8)|(((Display_data[39]&0x04)>>2)<<15);
+      data  |= (((Display_data[46]&0x01)<<9))|(((Display_data[46]&0x02)>>1)<<10)|(((Display_data[46]&0x04)>>2)<<11);
+      data  |= (((Display_data[47]&0x01)<<12))|(((Display_data[47]&0x02)>>1)<<13)|(((Display_data[47]&0x04)>>2)<<14);
+
+      returndata2[2]  = (unsigned char)(data%256);
+      returndata2[3]  = (unsigned char)(data/256);
+  
+      data = 0;
+      data  |= (((Display_data[54]&0x01)<<1))|(((Display_data[54]&0x02)>>1)<<2)|(((Display_data[54]&0x04)>>2)<<3);
+      data  |= (((Display_data[38]&0x01)<<4))|(((Display_data[38]&0x02)>>1)<<5)|(((Display_data[38]&0x04)>>2)<<6);
+      data  |= (((Display_data[45]&0x01)<<7))|(((Display_data[45]&0x02)>>1)<<8)|(((Display_data[45]&0x04)>>2)<<9);
+      data  |= (((Display_data[53]&0x01)<<12))|(((Display_data[53]&0x02)>>1)<<13)|(((Display_data[53]&0x04)>>2)<<14);
+
+      returndata2[4]  = (unsigned char)(data%256);
+      returndata2[5]  = (unsigned char)(data/256);
+      
+      data = 0;
+      data  |= (((Display_data[60]&0x01)<<1))|(((Display_data[60]&0x02)>>1)<<2)|(((Display_data[60]&0x04)>>2)<<3);
+      data  |= (((Display_data[44]&0x01)<<4))|(((Display_data[44]&0x02)>>1)<<5)|(((Display_data[44]&0x04)>>2)<<6);
+      data  |= (((Display_data[51]&0x01)<<7))|(((Display_data[51]&0x02)>>1)<<8)|(((Display_data[51]&0x04)>>2)<<9);
+      data  |= (((Display_data[52]&0x01)<<10))|(((Display_data[52]&0x02)>>1)<<0)|(((Display_data[52]&0x04)>>2)<<11);
+      data  |= (((Display_data[59]&0x01)<<12))|(((Display_data[59]&0x02)>>1)<<13)|(((Display_data[59]&0x04)>>2)<<14);
+
+      returndata2[6]  = (unsigned char)(data%256);
+      returndata2[7]  = (unsigned char)(data/256);
+ 
+      data = 0;
+      data  |= (((Display_data[66]&0x01)<<1))|(((Display_data[66]&0x02)>>1)<<2)|(((Display_data[66]&0x04)>>2)<<3);
+      data  |= (((Display_data[50]&0x01)<<4))|(((Display_data[50]&0x02)>>1)<<5)|(((Display_data[50]&0x04)>>2)<<6);
+      data  |= (((Display_data[57]&0x01)<<7))|(((Display_data[57]&0x02)>>1)<<8)|(((Display_data[57]&0x04)>>2)<<9);
+      data  |= (((Display_data[58]&0x01)<<10))|(((Display_data[58]&0x02)>>1)<<11)|(((Display_data[58]&0x04)>>2)<<15);
+      data  |= (((Display_data[65]&0x01)<<12))|(((Display_data[65]&0x02)>>1)<<13)|(((Display_data[65]&0x04)>>2)<<14);
+
+      returndata2[8]  = (unsigned char)(data%256);
+      returndata2[9]  = (unsigned char)(data/256);
+      
+      data = 0;
+      data  |= (((Display_data[55]&0x01)<<1))|(((Display_data[55]&0x02)>>1)<<2)|(((Display_data[55]&0x04)>>2)<<3);
+      data  |= (((Display_data[56]&0x01)<<4))|(((Display_data[56]&0x02)>>1)<<5)|(((Display_data[56]&0x04)>>2)<<6);
+      data  |= (((Display_data[63]&0x01)<<7))|(((Display_data[63]&0x02)>>1)<<8)|(((Display_data[63]&0x04)>>2)<<9);
+      data  |= (((Display_data[64]&0x01)<<10))|(((Display_data[64]&0x02)>>1)<<11)|(((Display_data[64]&0x04)>>2)<<12);
+
+
+      returndata2[10]  = (unsigned char)(data%256);
+      returndata2[11]  = (unsigned char)(data/256);
+   
+      data = 0;
+      data  |= (((Display_data[61]&0x01)<<1))|(((Display_data[61]&0x02)>>1)<<2)|(((Display_data[61]&0x04)>>2)<<3);
+      data  |= (((Display_data[62]&0x01)<<4))|(((Display_data[62]&0x02)>>1)<<5)|(((Display_data[62]&0x04)>>2)<<6);
+      data  |= (((Display_data[69]&0x01)<<7))|(((Display_data[69]&0x02)>>1)<<8)|(((Display_data[69]&0x04)>>2)<<9);
+      data  |= (((Display_data[70]&0x01)<<10))|(((Display_data[70]&0x02)>>1)<<11)|(((Display_data[70]&0x04)>>2)<<12);
+      data  |= (((Display_data[71]&0x01)<<13))|(((Display_data[71]&0x02)>>1)<<0)|(((Display_data[71]&0x04)>>2)<<14);
+
+      returndata2[12]  = (unsigned char)(data%256);
+      returndata2[13]  = (unsigned char)(data/256);
+
+      data = 0;
+      data  |= (((Display_data[67]&0x01)<<1))|(((Display_data[67]&0x02)>>1)<<2)|(((Display_data[67]&0x04)>>2)<<3);
+      data  |= (((Display_data[68]&0x01)<<4))|(((Display_data[68]&0x02)>>1)<<5)|(((Display_data[68]&0x04)>>2)<<6);
+      returndata2[14]  = (unsigned char)(data%256);
+      returndata2[15]  = (unsigned char)(data/256);
+      
+}
+
+void RB_RGBLEDMATRIX::RGBLEDMATRIX_Start(uint8_t d1[16],uint8_t d2[16],uint8_t d3[16],uint8_t d4[16])
+{
+      RB_RGBLEDMATRIX_Write2Byte(0x77,CONFIGURE_CMD_PAGE, FRAME1_PAGE);//__LED_SelectFrame1Page;  
+      RB_RGBLEDMATRIX_WriteNByte(0x77,0X00,d3, TYPE3_LED_FRAME_LENGTH);
+      RB_RGBLEDMATRIX_Write2Byte(0x74,CONFIGURE_CMD_PAGE, FRAME1_PAGE);//__LED_SelectFrame1Page;  
+      RB_RGBLEDMATRIX_WriteNByte(0x74,0X00,d1, TYPE3_LED_FRAME_LENGTH);
+      RB_RGBLEDMATRIX_Write2Byte(0x77,CONFIGURE_CMD_PAGE, FRAME2_PAGE);//__LED_SelectFrame1Page;
+      RB_RGBLEDMATRIX_WriteNByte(0x77,0X00,d4, TYPE3_LED_FRAME_LENGTH);
+      RB_RGBLEDMATRIX_Write2Byte(0x74,CONFIGURE_CMD_PAGE, FRAME2_PAGE);//__LED_SelectFrame1Page;
+      RB_RGBLEDMATRIX_WriteNByte(0x74,0X00,d2, TYPE3_LED_FRAME_LENGTH);
 }

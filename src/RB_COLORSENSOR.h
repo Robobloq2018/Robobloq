@@ -64,6 +64,8 @@
 #define TCS34725_BDATAH           (0x1B)
 
 
+
+
 typedef enum
 {
   TCS34725_INTEGRATIONTIME_2_4MS  = 0xFF,   /**<  2.4ms - 1 cycle    - Max Count: 1024  */
@@ -99,11 +101,18 @@ class RB_COLORSENSOR :public RB_SoftI2CMaster
   void setIntLimits(uint16_t low, uint16_t high);
   void     enable(void);
   void     disable(void);
+   uint16_t  getRGBWvalue(void);
+   unsigned short RB_COLORSENSOR::RGBToHSV(float *h,float *s,float *v);
+   unsigned char RB_COLORSENSOR::GetColor(void);
+   unsigned char RB_COLORSENSOR::GetColor_Game(void);
+   
  private:
   boolean   _tcs34725Initialised;
   tcs34725Gain_t _tcs34725Gain;
   tcs34725IntegrationTime_t _tcs34725IntegrationTime; 
-  
+   uint8_t Read_OneByte(uint8_t slaveaddress,uint8_t regaddres);
+   uint16_t Read_TwoByte(uint8_t slaveaddress,uint8_t regaddress);
+    uint8_t Write_OneByte(uint8_t slaveaddress,uint8_t regaddress,uint8_t data);
 };
 
 

@@ -6,13 +6,15 @@
  * 
  */
 
- RB_RGBLed :: RB_RGBLed(uint8_t port)
+ RB_RGBLed :: RB_RGBLed(uint8_t port):RB_Port(port)
 {  
-  pinMask       = digitalPinToBitMask(port);
-  ws2812_port   = portOutputRegister(digitalPinToPort(port) );
-  // set pinMode OUTPUT */
-  pinMode(port, OUTPUT);
-  setLedNumer(RB_MAX_LED_NUMBER);
+  uint8_t RGB_Port = RBPort[port].dat;
+ 
+  pinMask       = digitalPinToBitMask(RGB_Port);
+  ws2812_port   = portOutputRegister(digitalPinToPort(RGB_Port) );
+  
+  pinMode(RGB_Port, OUTPUT);
+  setLedNumer(4);
   
   
 }
@@ -27,6 +29,7 @@
   pinMode(port, OUTPUT);
   setLedNumer(led_number);
 }
+
  /*
   * 
   */

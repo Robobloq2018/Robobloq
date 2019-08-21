@@ -3,10 +3,10 @@
           /*
            *  Rx_buf
            */
-          char       RX_BUF[2][50] ;
-          char       TX_BUF[50]    ;
+          char       RX_BUF[2][200] ;
+          char       TX_BUF[200]    ;
           char       RX_OK = 0     ;
-          char       RX_COUNT = 0  ;
+        unsigned   char       RX_COUNT = 0  ;
           bool       RX_ACT = 0    ; 
 
 RB_Serial::RB_Serial(void)

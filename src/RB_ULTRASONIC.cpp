@@ -3,12 +3,13 @@
 
 RB_Ultrasonic::RB_Ultrasonic(void) :RB_SoftI2CMaster(0)
 {
-  
+    RB_SoftI2CMaster::SetMode(0); 
 }
 
 RB_Ultrasonic::RB_Ultrasonic(uint8_t port):RB_SoftI2CMaster(port)
 {
  _SignalPin = RBPort[port].clk;
+ RB_SoftI2CMaster::SetMode(0); 
   
 }
 
@@ -24,7 +25,7 @@ void RB_Ultrasonic::RB_Ultrasonic_SetRGB(uint8_t SlaveAddress,uint8_t RegisterAd
 double RB_Ultrasonic::distanceCm(uint16_t MAXcm)
 {
   long distance = measure(MAXcm * 100+ 200);
-  if(distance == 0)
+  if(distance <= 0)
   {
     distance = MAXcm * 58;
   }
@@ -59,6 +60,10 @@ long RB_Ultrasonic::measure(unsigned long timeout)
     endTransmission();
     pinMode(_SignalPin, INPUT);
     duration = pulseIn(_SignalPin, LOW, timeout);
+	 if(duration>=300)
+       {
+        duration -=300;
+       }
     _measureValue = duration;
   }
   else
@@ -98,11 +103,11 @@ double RB_Ultrasonic::Uldistance(double max_distance)
 	for(i=0;i<2;i++)
 	{
 		
-		Distance[i] = distanceCm();
-		wdt_reset();
-    delay(20);
+    Distance[i] = distanceCm();
+    delay(18); 
+	//   2018-10-26    delay(28)
 	}
-	if(Distance[0]>Distance[1])
+	if(Distance[0]>=Distance[1])
 	   {return Distance[0];}
   else 
      {return Distance[1];}

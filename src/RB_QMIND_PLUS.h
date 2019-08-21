@@ -12,7 +12,7 @@
 #include "RB_ADC.h"
 #include "RB_BUZZER.h"
 #include "RB_DCMOTOR.h"
-#include "RB_ENCONDERMOTOR.h"
+
 #include "RB_LEDMATRIX.h"
 #include "RB_LIGHTSENSOR.h"
 #include "RB_LINEFOLLOWER.h"
@@ -29,9 +29,62 @@
 #include "RB_MP3.h"
 #include "RB_RGBLEDMATRIX.h"
 #include "RB_COLORSENSOR.h"
+#include "RB_GYRO.h"
+#include "RB_TOUCHSENSOR.h"
+
+#include "RB_DIGITALDISPLAY.h"
+#include "RB_TEMPERATURE.h"
+
+#include "RB_JOYSTICK.h"
+#include "RB_FLAMESENSOR.h"
+#include "RB_GASSENSOR.h"
+#include "RB_POTENTIOMETER.h"
+
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)    //Qoooers
+#include "RB_ENCONDERMOTOR.h" 
+
+
+ 
+#define DeviceType                            1          //主控类型          
+#define HardwareVersion                       2          //硬件版本
+#define SoftwareVersion                       11        //软件版本     
+
+
+/*
+ *    WORK MODE
+ */
+
+ #define Remote_Control_Mode               0X00      //遥控模式
+ #define Ultrasonic_Mode                   0X01      //超声波蔽障模式
+ #define Line_Follower_Mode                0x02      //巡线模式
 
 
 
+#else                                            //Qscout
+
+#include "RB_DCMOTORONBOARD.h"	
+/*
+ *  Hardware Information
+ */
+
+#define DeviceType                            0x02          //设备类型   K2
+#define HardwareVersion                       0x01          //硬件版本
+#define SoftwareVersion                       0x07          //软件版本
+
+
+/*
+ *    WORK MODE
+ */
+
+ #define Remote_Control_Mode               0X00           //遥控模式
+ #define Ultrasonic_Mode                   0X01           //超声波蔽障模式
+ #define Line_Follower_Mode                0x02          //巡线模式
+ #define Dinosaur_Ultrasonic_Mode         0x03          //恐龙模式蔽障模式
+ #define Alligator_Ultrasonic_Mode         0x04          //鳄鱼传统蔽障模式
+
+
+
+#endif
 /*
  *   Action
  */
@@ -52,8 +105,13 @@
 #define   Mode_Change                         0x18          //模式切换
 #define   Servo_Set                           0x19          //舵机控制
 #define   ExDCMotor_Set                       0x1A          //外置电机控制
-#define   RGBLEDMatrix_Set                    0x1B          //外置电机控制
-#define   MP3_Set                             0x1C
+#define   RGBLEDMatrix_Set                    0x1B          //RGB矩阵屏设置
+#define   MP3_Set                             0x1C          //MP3设置
+#define   TouchSensor_Set                     0x1D          //触摸传感器主动上报设置
+#define   DigitalDisplay_Set                  0x1E          //4段数码管显示设置
+#define   RGBLEDArray_Set                     0x1F          //4个RGBLED显示设置
+
+
 
 #define   UlSensorDistance_Read               0xA1          //超声波距离读取
 #define   Button_Read                         0xA2          //按键读取
@@ -65,25 +123,22 @@
 #define   PIRSensor_Read                      0xA8          //人体红外传感器读取
 #define   GyroSensor_Read                     0xA9          //陀螺仪传感器数据读取
 #define   ColorSensor_Read                    0XAA          //颜色传感器读取
+#define   TouchSensor_Read                    0XAB          //触摸传感器读取
+#define   TemptureSensors_Read                0XAC          //2路温度传感读取
+#define   Line_Follower_Array_Read            0XAD          //6路巡线传感器读取
 
 
 
-/*
- *  Hardware Information
- */
-
-#define DeviceType                            1          //主控类型          
-#define HardwareVersion                       2          //硬件版本
-#define SoftwareVersion                       7          //软件版本     
+#define   JoyStickSensor_Read                 0XAE          //遥感读取
+#define   FlameSensor_Read                    0XAF          //火焰读取
+#define   GasSensor_Read                      0XB0          //气体读取      
+#define   Potentimeter_Read                   0XB1          //电位器读取
 
 
-/*
- *    WORK MODE
- */
 
- #define Remote_Control_Mode               0X00      //遥控模式
- #define Ultrasonic_Mode                   0X01      //超声波蔽障模式
- #define Line_Follower_Mode                0x02      //巡线模式
+
+ 
+ 
 
 
 
