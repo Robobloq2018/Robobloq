@@ -15,32 +15,14 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-   M1.SetMotorPwm(90);
-   M2.SetMotorPwm(90);
-   delay(500); 
-   M1.SetMotorPwm(70);
-   M2.SetMotorPwm(70);
-   delay(500); 
-   M1.SetMotorPwm(50);
-   M2.SetMotorPwm(50);
-   delay(500); 
-   M1.SetMotorPwm(0);
-   M2.SetMotorPwm(0);
-   delay(500); 
-   M1.SetMotorPwm(-60);
-   M2.SetMotorPwm(-60);
-   delay(500); 
-   M1.SetMotorPwm(-80);
-   M2.SetMotorPwm(-80);
-   delay(500); 
-   M1.SetMotorPwm(-90);
-   M2.SetMotorPwm(-90);
-    delay(500); 
-       M1.SetMotorPwm(90);
-   M2.SetMotorPwm(-90);
-    delay(500); 
-     M1.SetMotorPwm(-90);
-   M2.SetMotorPwm(90);
-    delay(500);
+   M1.SetMotorPwm(30);
+   M2.SetMotorPwm(33);
+   delay(5000);
+
+   
+   M1.SetMotorPwm(-35);
+   M2.SetMotorPwm(-35);
+   delay(5000); 
+ 
   
 }

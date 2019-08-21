@@ -9,7 +9,8 @@ void setup() {
     ul.RB_Ultrasonic_SetRGB(0x40,0xA1,0,200,0);
     delay(1000);
      ul.RB_Ultrasonic_SetRGB(0x40,0xA1,0,0,200);
-    delay(1000);
+    delay(1000);  
+    ul.RB_Ultrasonic_SetRGB(0x40,0xA1,0,0,0);
     Serial.begin(115200);
 }
 

@@ -1,7 +1,7 @@
 #include "RB_BUZZER.h"
 
 
-RB_Buzzer Buzzer(36);
+RB_Buzzer Buzzer(Buzzer_Pin);
 
 
 void setup() {
